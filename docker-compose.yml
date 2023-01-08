@@ -1,0 +1,50 @@
+version: '3'
+
+services:
+# SUBINDO O ZOOKEEPER E RODANDO DA REDE CRIADA
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    # RODANDO NA REDE CRIADA
+    networks:
+      - broker-kafka
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+# SUBINDO SERVIÇO DO KAFKA E RODANDO DA REDE CRIADA, ONDE TEM O ZOOKEPER RODANDO
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    networks:
+      - broker-kafka
+    # DIZENDO QUE DEPENDE DO ZOOKEEPER, QUER DIZER QUE O KAFKA SO VAI SUBIR SE O ZOOKEEPER SUBIR.
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+# INTERFACE GRAFICA PARA VIZUALIZAR MELHOR O CLUSTER DO KAFKA.
+  kafdrop:
+    image: obsidiandynamics/kafdrop:latest
+    networks:
+      - broker-kafka
+    # DIZENDO QUE DEPENDE DO KAFKA, QUER DIZER QUE O KAFDROP SO VAI SUBIR SE O KAFKA SUBIR.
+    depends_on:
+      - kafka
+    ports:
+      - "19000:9000"
+    # DEFININDO VARIAÇÃO, PARA FAZER A CONECÇÃO COM O BROCKER DO KAFKA
+    environment:
+      KAFKA_BROKERCONNECT: kafka:29092
+
+# CRIANDO UMA REDE
+
+networks:
+  broker-kafka:
+    driver: bridge
