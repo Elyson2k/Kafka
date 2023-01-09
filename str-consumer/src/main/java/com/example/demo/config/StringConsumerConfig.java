@@ -10,16 +10,21 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.listener.RecordInterceptor;
 
 import java.util.HashMap;
 
+// Anotação para poder criar LOGS.
 @Log4j2
+// Mesma coisa que um @Autowired
 @RequiredArgsConstructor
+// Classe de configuração.
 @Configuration
 public class StringConsumerConfig {
 
     private final KafkaProperties properties;
 
+    // Config para deserializar as menssagens que chegou do producer.
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         var configs = new HashMap<String, Object>();
@@ -30,21 +35,27 @@ public class StringConsumerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> strContainerFactory(
-            ConsumerFactory<String, String> consumerFactory
-    ) {
+    public ConcurrentKafkaListenerContainerFactory<String, String> strContainerFactory(ConsumerFactory<String, String> consumerFactory) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
         factory.setConsumerFactory(consumerFactory);
         return factory;
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> validMessageContainerFactory(
-            ConsumerFactory<String, String> consumerFactory
-    ) {
+    public ConcurrentKafkaListenerContainerFactory<String, String> validMessageContainerFactory(ConsumerFactory<String, String> consumerFactory) {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
         factory.setConsumerFactory(consumerFactory);
+        factory.setRecordInterceptor(validMessage());
         return factory;
+    }
+
+    private RecordInterceptor<String, String> validMessage() {
+        return record -> {
+            if(record.value().contains("Teste")) {
+                log.info("Possui a palavra TESTE");
+            }
+            return record;
+        };
     }
 
 }
