@@ -1,6 +1,7 @@
 package com.example.demo.listeners;
 
 import com.example.demo.custom.StrConsumerCustomListener;
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.TopicPartition;
@@ -10,9 +11,11 @@ import org.springframework.stereotype.Component;
 @Component
 public class StrConsumerListener {
 
+    @SneakyThrows
     @StrConsumerCustomListener(groupId = "1")
     public void listener(String msg){
         log.info("CREATE ::: message = {}", msg);
+        throw new IllegalAccessException("EXCEPTION...");
     }
 
     @StrConsumerCustomListener(groupId = "1")
